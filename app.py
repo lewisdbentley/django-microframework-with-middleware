@@ -1,4 +1,3 @@
-import html
 import os
 import sys
 
@@ -13,19 +12,25 @@ settings.configure(
     ALLOWED_HOSTS=["*"],  # Disable host header validation
     ROOT_URLCONF=__name__,  # Make this module the urlconf
     SECRET_KEY=get_random_string(50),  # We aren't using any security features but Django requires this setting
+    WSGI_APPLICATION=__name__ + '.app',
 )
 
 
 def index(request):
-    name = request.GET.get("name", "World")
-    return HttpResponse(f"Hello, {html.escape(name)}!")
+    return HttpResponse(request.headers.get('foo'))
 
 
 urlpatterns = [
     path("", index),
 ]
 
-app = get_wsgi_application()
+django_app = get_wsgi_application()
+
+
+def app(environ, start_response):
+    environ['HTTP_FOO'] = 'Bar'
+    return django_app(environ, start_response)
+
 
 if __name__ == "__main__":
     from django.core.management import execute_from_command_line
